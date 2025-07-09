@@ -310,7 +310,7 @@ export const AdjustmentHistory = () => {
     return (
       <div className="card bg-base-200 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title">Adjustment History</h2>
+          <h2 className="card-title text-white dark:text-primary">Adjustment History</h2>
           <div className="flex items-center justify-center h-32">
             <span className="loading loading-spinner loading-lg"></span>
           </div>
@@ -323,7 +323,7 @@ export const AdjustmentHistory = () => {
   return (
     <div className="card bg-primary dark:bg-neutral shadow-xl">
       <div className="card-body">
-        <h2 className="card-title dark:text-primary">Adjustment History</h2>
+        <h2 className="card-title text-white dark:text-primary">Adjustment History</h2>
 
         {adjustments.length === 0 ? (
           <div className="text-center py-8">
@@ -344,12 +344,12 @@ export const AdjustmentHistory = () => {
             <table className="table table-zebra dark:text-primary">
               <thead>
                 <tr>
-                  <th className="dark:text-primary">Time</th>
-                  <th className="dark:text-primary">Type</th>
-                  <th className="dark:text-primary">Token 0</th>
-                  <th className="dark:text-primary">Token 1</th>
-                  <th className="dark:text-primary">Bounds</th>
-                  <th className="dark:text-primary">Transaction</th>
+                  <th className="text-white dark:text-primary">Time</th>
+                  <th className="text-white dark:text-primary">Type</th>
+                  <th className="text-white dark:text-primary">Token 0</th>
+                  <th className="text-white dark:text-primary">Token 1</th>
+                  <th className="text-white dark:text-primary">Bounds</th>
+                  <th className="text-white dark:text-primary">Transaction</th>
                 </tr>
               </thead>
               <tbody>
@@ -412,7 +412,7 @@ export const AdjustmentHistory = () => {
 
         <div className="card-actions justify-end mt-4">
           <button
-            className="btn btn-outline btn-sm"
+            className="btn btn-outline btn-sm text-white dark:text-primary"
             onClick={() => {
               debugLog("Manual refresh triggered");
               fetchHistoricalEvents();
