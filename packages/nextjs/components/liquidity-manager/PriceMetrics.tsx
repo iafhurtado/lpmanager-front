@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useReadContract } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import { lpManagerAbi } from "~~/app/liquidity-manager/lpmanager-abi";
 import { getMockPriceData } from "~~/utils/mockData";
 
@@ -15,7 +15,7 @@ const CONTRACT_ADDRESS = "0x3b7b4EB1186B889Df55e9184738468CCE1a6703f"; // Liquid
 
 export const PriceMetrics = () => {
   const [priceData, setPriceData] = useState(getMockPriceData());
-  const [currentTime, setCurrentTime] = useState("");
+  const { address: userAddress } = useAccount();
 
   // Basic contract verification calls
   const { data: contractToken0 } = useReadContract({
@@ -34,6 +34,17 @@ export const PriceMetrics = () => {
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: lpManagerAbi,
     functionName: "pool",
+  });
+
+  // Share Balance call
+  const { data: shareBalance } = useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: lpManagerAbi,
+    functionName: "balanceOf",
+    args: userAddress ? [userAddress] : undefined,
+    query: {
+      enabled: !!userAddress,
+    },
   });
 
   // Try different amounts for price calculation
@@ -74,6 +85,8 @@ export const PriceMetrics = () => {
     console.log("Contract Token1:", contractToken1);
     console.log("Our Token0 Address:", token0Address);
     console.log("Our Token1 Address:", token1Address);
+    console.log("User Address:", userAddress);
+    console.log("Share Balance:", shareBalance);
     console.log("Amount In (1 MXNb):", AMOUNT_IN_SMALL.toString());
     console.log("Amount In (100 MXNb):", AMOUNT_IN_MEDIUM.toString());
     console.log("Amount In (10,000 MXNb):", AMOUNT_IN_LARGE.toString());
@@ -92,19 +105,9 @@ export const PriceMetrics = () => {
     contractToken0,
     contractToken1,
     poolAddress,
+    userAddress,
+    shareBalance,
   ]);
-
-  // Update current time on client side to avoid hydration mismatch
-  useEffect(() => {
-    const updateTime = () => {
-      setCurrentTime(new Date().toLocaleTimeString());
-    };
-
-    updateTime(); // Set initial time
-    const interval = setInterval(updateTime, 1000); // Update every second
-
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     // Update price data when contract data changes
@@ -161,27 +164,11 @@ export const PriceMetrics = () => {
     }
   }, [oracleAmountOut, spotAmountOut]);
 
+  // Format share balance for display
+  const formattedShareBalance = shareBalance ? Number(shareBalance) / 10 ** 18 : 0;
+
   return (
     <div className="grid grid-cols-2 gap-2">
-      {/* Oracle Price */}
-      <div className="card border-info shadow-sm bg-primary dark:bg-neutral dark:text-primary">
-        <div className="card-body p-3">
-          <h3 className="card-title text-lg mb-1 text-white dark:text-primary">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            Oracle
-          </h3>
-          <p className="text-4xl font-bold text-white dark:text-primary">${priceData.oraclePrice}</p>
-          <p className="text-lg text-white dark:text-primary">{currentTime}</p>
-        </div>
-      </div>
-
       {/* Pool Market Price */}
       <div className="card border-primary shadow-sm bg-primary dark:bg-neutral dark:text-primary">
         <div className="card-body p-3">
@@ -197,7 +184,42 @@ export const PriceMetrics = () => {
             Pool
           </h3>
           <p className="text-4xl font-bold text-white dark:text-primary">${priceData.poolPrice}</p>
-          <p className="text-lg text-white dark:text-primary">{currentTime}</p>
+        </div>
+      </div>
+
+      {/* Share Balance */}
+      <div className="card border-success shadow-sm bg-primary dark:bg-neutral dark:text-primary">
+        <div className="card-body p-3">
+          <h3 className="card-title text-lg mb-1 text-white dark:text-primary">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+              />
+            </svg>
+            Shares
+          </h3>
+          <p className="text-4xl font-bold text-white dark:text-primary">{formattedShareBalance.toFixed(4)}</p>
+        </div>
+      </div>
+
+      {/* Oracle Price */}
+      <div className="card border-info shadow-sm bg-primary dark:bg-neutral dark:text-primary">
+        <div className="card-body p-3">
+          <h3 className="card-title text-lg mb-1 text-white dark:text-primary">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Oracle
+          </h3>
+          <p className="text-4xl font-bold text-white dark:text-primary">${priceData.oraclePrice}</p>
         </div>
       </div>
 
@@ -206,18 +228,6 @@ export const PriceMetrics = () => {
         <div className="card-body p-3">
           <h3 className="card-title text-lg mb-1 text-white dark:text-primary">Difference</h3>
           <p className="text-4xl font-bold text-white dark:text-primary">${priceData.priceDifference.toFixed(6)}</p>
-          <div className="badge badge-outline badge-lg text-white dark:text-primary">{priceData.volatility}</div>
-        </div>
-      </div>
-
-      {/* Volatility */}
-      <div className="card shadow-sm bg-primary dark:bg-neutral dark:text-primary">
-        <div className="card-body p-3">
-          <h3 className="card-title text-lg mb-1 text-white dark:text-primary">Volatility</h3>
-          <p className="text-4xl font-bold text-white dark:text-primary">
-            {priceData.priceDifferencePercent.toFixed(2)}%
-          </p>
-          <p className="text-lg text-white dark:text-primary">{priceData.volatility} risk</p>
         </div>
       </div>
     </div>
