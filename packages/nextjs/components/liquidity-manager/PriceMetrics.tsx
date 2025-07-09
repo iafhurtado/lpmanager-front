@@ -90,7 +90,7 @@ export const PriceMetrics = () => {
   }, [oracleAmountOut, spotAmountOut]);
 
   // Format share balance for display
-  const formattedShareBalance = shareBalance ? Number(shareBalance) / 10 ** 18 : 0;
+  const formattedShareBalance = shareBalance ? Number(shareBalance) / 10 ** 6 : 0;
 
   return (
     <div className="grid grid-cols-2 gap-2">

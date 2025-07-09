@@ -61,11 +61,6 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
   const [isApproving, setIsApproving] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
 
-  // Transaction hashes for confirmation
-  const [approvalTxHash, setApprovalTxHash] = useState<string | null>(null);
-  const [depositTxHash, setDepositTxHash] = useState<string | null>(null);
-  const [withdrawTxHash, setWithdrawTxHash] = useState<string | null>(null);
-
   // Error states
   const [token0Error, setToken0Error] = useState<string | null>(null);
   const [token1Error, setToken1Error] = useState<string | null>(null);
@@ -75,23 +70,23 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
   const [token0Allowance, setToken0Allowance] = useState("0");
   const [token1Allowance, setToken1Allowance] = useState("0");
   const [requiresApproval, setRequiresApproval] = useState(false);
-  const [approvingToken, setApprovingToken] = useState<"token0" | "token1" | null>(null);
+  const [approvingToken, setApprovingToken] = useState<"token0" | "token1" | "both" | null>(null);
 
-  const { writeContract: approveToken } = useWriteContract();
-  const { writeContract: deposit } = useWriteContract();
-  const { writeContract: withdraw } = useWriteContract();
+  const { data: approvalResult, writeContractAsync: approveToken } = useWriteContract();
+  const { data: depositResult, writeContractAsync: deposit } = useWriteContract();
+  const { data: withdrawResult, writeContractAsync: withdraw } = useWriteContract();
 
   // Wait for transaction confirmations
-  const { isLoading: isApprovalConfirming } = useWaitForTransactionReceipt({
-    hash: approvalTxHash as `0x${string}`,
+  const { isLoading: isApprovalConfirming, isSuccess: isApprovalSuccess } = useWaitForTransactionReceipt({
+    hash: approvalResult,
   });
 
-  const { isLoading: isDepositConfirming } = useWaitForTransactionReceipt({
-    hash: depositTxHash as `0x${string}`,
+  const { isLoading: isDepositConfirming, isSuccess: isDepositSuccess } = useWaitForTransactionReceipt({
+    hash: depositResult,
   });
 
-  const { isLoading: isWithdrawConfirming } = useWaitForTransactionReceipt({
-    hash: withdrawTxHash as `0x${string}`,
+  const { isLoading: isWithdrawConfirming, isSuccess: isWithdrawSuccess } = useWaitForTransactionReceipt({
+    hash: withdrawResult,
   });
 
   // Read token balances
@@ -117,32 +112,7 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
     args: [accountAddress],
   });
 
-  // Read deposit maximums
-  const { data: deposit0Max } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: lpManagerAbi,
-    functionName: "deposit0Max",
-  });
-
-  const { data: deposit1Max } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: lpManagerAbi,
-    functionName: "deposit1Max",
-  });
-
-  // Read whitelist status
-  const { data: activeDepositorWhitelist } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: lpManagerAbi,
-    functionName: "activeDepositorWhitelist",
-  });
-
-  const { data: approvedDepositor } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: lpManagerAbi,
-    functionName: "approvedDepositor",
-    args: [accountAddress],
-  });
+  // Removed deposit0Max, deposit1Max, activeDepositorWhitelist, and approvedDepositor reads as per instructions.
 
   // Read token0 allowance
   const { data: token0AllowanceData } = useReadContract({
@@ -211,34 +181,9 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
     }
   }, [token1Amount, token1Balance]);
 
-  // Validate deposit maximums
-  useEffect(() => {
-    if (deposit0Max && typeof deposit0Max === "bigint" && token0Amount) {
-      const maxAmount = parseFloat(formatUnits(deposit0Max, TOKEN0_DECIMALS));
-      const amount = parseFloat(token0Amount);
-      if (amount > maxAmount) {
-        setToken0Error(`Exceeds maximum deposit of ${maxAmount.toFixed(6)} MXNb`);
-      } else if (!token0Error || token0Error === "Insufficient MXNb balance") {
-        setToken0Error(null);
-      }
-    }
-  }, [token0Amount, deposit0Max, token0Error]);
-
-  useEffect(() => {
-    if (deposit1Max && typeof deposit1Max === "bigint" && token1Amount) {
-      const maxAmount = parseFloat(formatUnits(deposit1Max, TOKEN1_DECIMALS));
-      const amount = parseFloat(token1Amount);
-      if (amount > maxAmount) {
-        setToken1Error(`Exceeds maximum deposit of ${maxAmount.toFixed(6)} USDT0`);
-      } else if (!token1Error || token1Error === "Insufficient USDT0 balance") {
-        setToken1Error(null);
-      }
-    }
-  }, [token1Amount, deposit1Max, token1Error]);
-
   useEffect(() => {
     if (sharesBalance && typeof sharesBalance === "bigint" && sharesAmount) {
-      const balance = parseFloat(formatUnits(sharesBalance, 18)); // LP tokens have 18 decimals
+      const balance = parseFloat(formatUnits(sharesBalance, 6)); // LP tokens have 18 decimals
       const amount = parseFloat(sharesAmount);
       if (amount > balance) {
         setSharesError("Insufficient LP token balance");
@@ -248,14 +193,38 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
     }
   }, [sharesAmount, sharesBalance]);
 
-  // Reset approval state when approval is confirmed
+  // Handle approval success
   useEffect(() => {
-    if (!isApprovalConfirming && approvalTxHash) {
-      setApprovalTxHash(null);
+    if (isApprovalSuccess) {
       setIsApproving(false);
       setApprovingToken(null);
+      // Don't refresh page, just let the user proceed to deposit
+      // The approval state will be updated automatically by the allowance hooks
     }
-  }, [isApprovalConfirming, approvalTxHash]);
+  }, [isApprovalSuccess]);
+
+  // Handle deposit success
+  useEffect(() => {
+    if (isDepositSuccess) {
+      setIsExecuting(false);
+      // Reset form
+      setToken0Amount("");
+      setToken1Amount("");
+      // Refresh the page to update balances
+      window.location.reload();
+    }
+  }, [isDepositSuccess]);
+
+  // Handle withdraw success
+  useEffect(() => {
+    if (isWithdrawSuccess) {
+      setIsExecuting(false);
+      // Reset form
+      setSharesAmount("");
+      // Refresh the page to update balances
+      window.location.reload();
+    }
+  }, [isWithdrawSuccess]);
 
   const handleApproval = async () => {
     if (!accountAddress) return;
@@ -286,8 +255,32 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
         token1Allowance: token1Allowance,
       });
 
-      // Approve token0 if needed
-      if (token0AmountNum > token0AllowanceNum && token0AmountNum > 0) {
+      // Check which tokens need approval
+      const needsToken0Approval = token0AmountNum > token0AllowanceNum && token0AmountNum > 0;
+      const needsToken1Approval = token1AmountNum > token1AllowanceNum && token1AmountNum > 0;
+
+      // Send both approval transactions back-to-back if both are needed
+      if (needsToken0Approval && needsToken1Approval) {
+        setApprovingToken("both");
+        console.log("Approving both tokens...");
+
+        // Approve token0 first
+        await approveToken({
+          address: TOKEN0_ADDRESS as `0x${string}`,
+          abi: ERC20_ABI,
+          functionName: "approve",
+          args: [CONTRACT_ADDRESS as `0x${string}`, token0ApprovalWithBuffer],
+        });
+
+        // Then approve token1
+        await approveToken({
+          address: TOKEN1_ADDRESS as `0x${string}`,
+          abi: ERC20_ABI,
+          functionName: "approve",
+          args: [CONTRACT_ADDRESS as `0x${string}`, token1ApprovalWithBuffer],
+        });
+      } else if (needsToken0Approval) {
+        // Only token0 needs approval
         setApprovingToken("token0");
         console.log("Approving token0:", {
           address: TOKEN0_ADDRESS,
@@ -295,17 +288,14 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
           amount: token0ApprovalWithBuffer.toString(),
         });
 
-        approveToken({
+        await approveToken({
           address: TOKEN0_ADDRESS as `0x${string}`,
           abi: ERC20_ABI,
           functionName: "approve",
           args: [CONTRACT_ADDRESS as `0x${string}`, token0ApprovalWithBuffer],
         });
-        return; // Wait for this approval to complete before proceeding
-      }
-
-      // Approve token1 if needed
-      if (token1AmountNum > token1AllowanceNum && token1AmountNum > 0) {
+      } else if (needsToken1Approval) {
+        // Only token1 needs approval
         setApprovingToken("token1");
         console.log("Approving token1:", {
           address: TOKEN1_ADDRESS,
@@ -313,7 +303,7 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
           amount: token1ApprovalWithBuffer.toString(),
         });
 
-        approveToken({
+        await approveToken({
           address: TOKEN1_ADDRESS as `0x${string}`,
           abi: ERC20_ABI,
           functionName: "approve",
@@ -355,10 +345,6 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
         deposit0: deposit0.toString(),
         deposit1: deposit1.toString(),
         to: accountAddress,
-        deposit0Max: deposit0Max?.toString(),
-        deposit1Max: deposit1Max?.toString(),
-        activeDepositorWhitelist,
-        approvedDepositor,
         token0Allowance,
         token1Allowance,
         requiresApproval,
@@ -372,15 +358,6 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
       });
 
       console.log("Deposit transaction submitted");
-
-      // Reset form after successful deposit
-      setTimeout(() => {
-        setToken0Amount("");
-        setToken1Amount("");
-        setDepositTxHash(null);
-        setIsExecuting(false);
-        onClose();
-      }, 3000);
     } catch (error) {
       console.error("Deposit failed:", error);
       setIsExecuting(false);
@@ -392,7 +369,7 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
 
     setIsExecuting(true);
     try {
-      const shares = parseUnits(sharesAmount, 18); // LP tokens have 18 decimals
+      const shares = parseUnits(sharesAmount, 6);
 
       console.log("Withdrawing:", {
         contract: CONTRACT_ADDRESS,
@@ -408,14 +385,6 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
       });
 
       console.log("Withdraw transaction submitted");
-
-      // Reset form after successful withdraw
-      setTimeout(() => {
-        setSharesAmount("");
-        setWithdrawTxHash(null);
-        setIsExecuting(false);
-        onClose();
-      }, 3000);
     } catch (error) {
       console.error("Withdraw failed:", error);
       setIsExecuting(false);
@@ -436,7 +405,7 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
 
   const handleMaxShares = () => {
     if (sharesBalance && typeof sharesBalance === "bigint") {
-      setSharesAmount(formatUnits(sharesBalance, 18));
+      setSharesAmount(formatUnits(sharesBalance, 6));
     }
   };
 
@@ -446,9 +415,6 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
     setSharesAmount("");
     setIsApproving(false);
     setIsExecuting(false);
-    setApprovalTxHash(null);
-    setDepositTxHash(null);
-    setWithdrawTxHash(null);
     onClose();
   };
 
@@ -485,11 +451,7 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
                   MAX
                 </button>
               </div>
-              {deposit0Max && typeof deposit0Max === "bigint" ? (
-                <div className="text-xs text-base-content/60 mt-1">
-                  Max deposit: {formatUnits(deposit0Max, TOKEN0_DECIMALS)} MXNb
-                </div>
-              ) : null}
+
               {token0Error && <p className="text-error text-sm mt-1">{token0Error}</p>}
             </div>
 
@@ -517,11 +479,7 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
                   MAX
                 </button>
               </div>
-              {deposit1Max && typeof deposit1Max === "bigint" ? (
-                <div className="text-xs text-base-content/60 mt-1">
-                  Max deposit: {formatUnits(deposit1Max, TOKEN1_DECIMALS)} USDT0
-                </div>
-              ) : null}
+
               {token1Error && <p className="text-error text-sm mt-1">{token1Error}</p>}
             </div>
 
@@ -544,9 +502,9 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
                 }
               >
                 {isApprovalConfirming
-                  ? `Confirming ${approvingToken === "token0" ? "MXNb" : "USDT0"} Approval...`
+                  ? `Confirming ${approvingToken === "token0" ? "MXNb" : approvingToken === "token1" ? "USDT0" : "Both Tokens"} Approval...`
                   : isApproving
-                    ? `Approving ${approvingToken === "token0" ? "MXNb" : "USDT0"}...`
+                    ? `Approving ${approvingToken === "token0" ? "MXNb" : approvingToken === "token1" ? "USDT0" : "Both Tokens"}...`
                     : isDepositConfirming
                       ? "Confirming Deposit..."
                       : isExecuting
@@ -556,26 +514,6 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
                           : "Deposit"}
               </button>
             </div>
-
-            {/* Whitelist warning */}
-            {activeDepositorWhitelist && typeof activeDepositorWhitelist === "boolean" && !approvedDepositor ? (
-              <div className="alert alert-warning">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="stroke-current shrink-0 h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                  />
-                </svg>
-                <span>Depositor whitelist is active. You may not be able to deposit.</span>
-              </div>
-            ) : null}
           </div>
         ) : (
           <div className="space-y-4">
@@ -594,7 +532,7 @@ export const TransactionModal = ({ isOpen, onClose, action }: TransactionModalPr
               />
               <div className="flex justify-between text-sm mt-1">
                 <span>
-                  Balance: {sharesBalance && typeof sharesBalance === "bigint" ? formatUnits(sharesBalance, 18) : "0"}
+                  Balance: {sharesBalance && typeof sharesBalance === "bigint" ? formatUnits(sharesBalance, 6) : "0"}
                 </span>
                 <button onClick={handleMaxShares} className="text-primary hover:underline">
                   MAX
