@@ -298,7 +298,7 @@ export const AdjustmentHistory = () => {
       case "withdraw":
         return <div className="badge badge-error">Withdraw</div>;
       case "rebalance":
-        return <div className="badge badge-info">Rebalance</div>;
+        return <div className="badge badge-warning">Rebalance</div>;
       case "bps-ranges":
         return <div className="badge badge-warning">Set BPS Ranges</div>;
       default:
@@ -321,14 +321,14 @@ export const AdjustmentHistory = () => {
   }
 
   return (
-    <div className="card bg-base-200 shadow-xl">
+    <div className="card bg-primary dark:bg-neutral shadow-xl">
       <div className="card-body">
-        <h2 className="card-title">Adjustment History</h2>
+        <h2 className="card-title dark:text-primary">Adjustment History</h2>
 
         {adjustments.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-base-content/70">No adjustments found</p>
-            <p className="text-sm text-base-content/50 mt-2">Events will appear here in real-time</p>
+            <p className="text-base-content/70 dark:text-primary">No adjustments found</p>
+            <p className="text-sm text-base-content/50 mt-2 dark:text-primary">Events will appear here in real-time</p>
             <button
               className="btn btn-sm btn-outline mt-4"
               onClick={() => {
@@ -341,38 +341,56 @@ export const AdjustmentHistory = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="table table-zebra">
+            <table className="table table-zebra dark:text-primary">
               <thead>
                 <tr>
-                  <th>Time</th>
-                  <th>Type</th>
-                  <th>Token 0</th>
-                  <th>Token 1</th>
-                  <th>Bounds</th>
-                  <th>Transaction</th>
+                  <th className="dark:text-primary">Time</th>
+                  <th className="dark:text-primary">Type</th>
+                  <th className="dark:text-primary">Token 0</th>
+                  <th className="dark:text-primary">Token 1</th>
+                  <th className="dark:text-primary">Bounds</th>
+                  <th className="dark:text-primary">Transaction</th>
                 </tr>
               </thead>
               <tbody>
-                {adjustments.map(adjustment => (
+                {adjustments.map((adjustment, index) => (
                   <tr key={adjustment.id}>
                     <td>
-                      <div className="text-sm">{formatTimestamp(adjustment.timestamp)}</div>
+                      <div className={`text-sm ${index % 2 === 0 ? "text-neutral-content" : "text-base-content"}`}>
+                        {formatTimestamp(adjustment.timestamp)}
+                      </div>
                     </td>
                     <td>{getTypeBadge(adjustment.type)}</td>
                     <td>
-                      <div className="font-mono text-sm">{adjustment.token0Amount}</div>
+                      <div
+                        className={`font-mono text-sm ${index % 2 === 0 ? "text-neutral-content" : "text-base-content"}`}
+                      >
+                        {adjustment.token0Amount}
+                      </div>
                     </td>
                     <td>
-                      <div className="font-mono text-sm">{adjustment.token1Amount}</div>
+                      <div
+                        className={`font-mono text-sm ${index % 2 === 0 ? "text-neutral-content" : "text-base-content"}`}
+                      >
+                        {adjustment.token1Amount}
+                      </div>
                     </td>
                     <td>
                       {adjustment.newLowerTick !== undefined && adjustment.newUpperTick !== undefined ? (
                         <div className="text-xs space-y-1">
-                          <div>Lower: {adjustment.newLowerTick}</div>
-                          <div>Upper: {adjustment.newUpperTick}</div>
+                          <div className={`${index % 2 === 0 ? "text-neutral-content" : "text-base-content"}`}>
+                            Lower: {adjustment.newLowerTick}
+                          </div>
+                          <div className={`${index % 2 === 0 ? "text-neutral-content" : "text-base-content"}`}>
+                            Upper: {adjustment.newUpperTick}
+                          </div>
                         </div>
                       ) : (
-                        <div className="text-xs text-base-content/50">-</div>
+                        <div
+                          className={`text-xs ${index % 2 === 0 ? "text-neutral-content/70" : "text-base-content/50"}`}
+                        >
+                          -
+                        </div>
                       )}
                     </td>
                     <td>
@@ -380,7 +398,7 @@ export const AdjustmentHistory = () => {
                         href={`https://arbiscan.io/tx/${adjustment.txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="link link-primary text-xs"
+                        className="text-success hover:text-success-focus text-xs font-medium underline"
                       >
                         {adjustment.txHash.slice(0, 8)}...
                       </a>
