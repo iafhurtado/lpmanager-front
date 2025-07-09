@@ -26,7 +26,7 @@ export const MOCK_PRICE_DATA = {
   poolPrice: "1.5692",
   priceDifference: 0.0014,
   priceDifferencePercent: 0.089,
-  volatility: "Low" as const,
+  volatility: "Low" as "Low" | "Medium" | "High",
 };
 
 export const MOCK_ADJUSTMENT_HISTORY = [
