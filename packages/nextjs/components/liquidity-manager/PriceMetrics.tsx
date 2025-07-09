@@ -30,7 +30,6 @@ export const PriceMetrics = () => {
 
   // Try different amounts for price calculation
   const AMOUNT_IN_SMALL = BigInt(10 ** TOKEN0_DECIMALS); // 1 MXNb
-  const AMOUNT_IN_LARGE = BigInt(10 ** TOKEN0_DECIMALS) * BigInt(10000); // 10,000 MXNb
 
   // Oracle price call with different amounts
   const { data: oracleAmountOut } = useReadContract({
