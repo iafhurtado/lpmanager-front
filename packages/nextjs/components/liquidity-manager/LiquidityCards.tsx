@@ -67,7 +67,7 @@ export const LiquidityCards = () => {
     // Update liquidity data when contract data changes
     if (basePosition && totalAmounts) {
       console.log("Processing contract data...");
-      const [liquidity, amount0, amount1] = basePosition as [bigint, bigint, bigint];
+      const [amount0, amount1] = basePosition as [bigint, bigint];
       const [total0, total1] = totalAmounts as [bigint, bigint];
 
       // Convert amounts to readable format
@@ -81,44 +81,18 @@ export const LiquidityCards = () => {
       const idle0 = total0Formatted - deployed0;
       const idle1 = total1Formatted - deployed1;
 
-      console.log("=== Liquidity Data ===");
-      console.log("Base Position:", {
-        liquidity: liquidity.toString(),
-        amount0: amount0.toString(),
-        amount1: amount1.toString(),
-      });
-      console.log("Total Amounts:", {
-        total0: total0.toString(),
-        total1: total1.toString(),
-      });
-      console.log("Formatted Amounts:", {
-        deployed0: deployed0.toFixed(6),
-        deployed1: deployed1.toFixed(6),
-        idle0: idle0.toFixed(6),
-        idle1: idle1.toFixed(6),
-      });
-      console.log("======================");
-
       setLiquidityData({
         token0Deployed: deployed0.toFixed(6),
         token1Deployed: deployed1.toFixed(6),
         token0Idle: Math.max(0, idle0).toFixed(6),
         token1Idle: Math.max(0, idle1).toFixed(6),
       });
-    } else {
-      console.log("Contract data not available yet or failed");
     }
   }, [basePosition, totalAmounts]);
 
   // Fallback to mock data if contract calls fail
   useEffect(() => {
-    if (basePositionError || totalAmountsError || !basePosition || !totalAmounts) {
-      console.log("Using fallback - contract calls failed or returned null");
-      console.log("Base Position Error:", basePositionError);
-      console.log("Total Amounts Error:", totalAmountsError);
-      console.log("Base Position:", basePosition);
-      console.log("Total Amounts:", totalAmounts);
-    }
+    // No-op: removed console logs for fallback
   }, [basePositionError, totalAmountsError, basePosition, totalAmounts]);
 
   return (
