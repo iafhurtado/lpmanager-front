@@ -71,12 +71,12 @@ export const LiquidityCards = () => {
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-center">Deployed Liquidity</h3>
           <div className="grid grid-cols-1 gap-4">
-            <div className="card bg-success border-success shadow-xl">
+            <div className="card bg-primary dark:bg-neutral border-success shadow-xl">
               <div className="card-body">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="card-title">Token 0 (MXNb)</h4>
-                    <p className="text-2xl font-bold">{liquidityData.token0Deployed}</p>
+                    <h4 className="card-title dark:text-primary">Token 0 (MXNb)</h4>
+                    <p className="text-2xl font-bold dark:text-primary">{liquidityData.token0Deployed}</p>
                   </div>
                   <div className="text-right">
                     <div className="badge badge-success">Deployed</div>
@@ -86,12 +86,12 @@ export const LiquidityCards = () => {
               </div>
             </div>
 
-            <div className="card bg-success border-success shadow-xl">
+            <div className="card bg-primary dark:bg-neutral border-success shadow-xl">
               <div className="card-body">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="card-title">Token 1 (USDT0)</h4>
-                    <p className="text-2xl font-bold">{liquidityData.token1Deployed}</p>
+                    <h4 className="card-title dark:text-primary">Token 1 (USDT0)</h4>
+                    <p className="text-2xl font-bold dark:text-primary">{liquidityData.token1Deployed}</p>
                   </div>
                   <div className="text-right">
                     <div className="badge badge-success">Deployed</div>
@@ -107,7 +107,7 @@ export const LiquidityCards = () => {
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-center">Idle Liquidity</h3>
           <div className="grid grid-cols-1 gap-4">
-            <div className="card bg-warning border-warning shadow-xl">
+            <div className="card bg-secondary border-warning shadow-xl">
               <div className="card-body">
                 <div className="flex items-center justify-between">
                   <div>
@@ -122,7 +122,7 @@ export const LiquidityCards = () => {
               </div>
             </div>
 
-            <div className="card bg-warning border-warning shadow-xl">
+            <div className="card bg-secondary border-warning shadow-xl">
               <div className="card-body">
                 <div className="flex items-center justify-between">
                   <div>
@@ -141,25 +141,25 @@ export const LiquidityCards = () => {
       </div>
 
       {/* Total Summary */}
-      <div className="card bg-base-200 shadow-2xl">
+      <div className="card bg-primary dark:bg-neutral shadow-2xl">
         <div className="card-body">
-          <h3 className="card-title justify-center">Total Liquidity</h3>
+          <h3 className="card-title justify-center dark:text-primary">Total Liquidity</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-              <p className="text-sm text-base-content/70">Total Token 0</p>
-              <p className="text-xl font-bold text-primary">
+              <p className="text-sm text-base-content/70 dark:text-primary">Total Token 0</p>
+              <p className="text-xl font-bold text-primary dark:text-primary">
                 {(parseFloat(liquidityData.token0Deployed) + parseFloat(liquidityData.token0Idle)).toFixed(6)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-base-content/70">Total Token 1</p>
-              <p className="text-xl font-bold text-primary">
+              <p className="text-sm text-base-content/70 dark:text-primary">Total Token 1</p>
+              <p className="text-xl font-bold text-primary dark:text-primary">
                 {(parseFloat(liquidityData.token1Deployed) + parseFloat(liquidityData.token1Idle)).toFixed(6)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-base-content/70">Deployed %</p>
-              <p className="text-xl font-bold text-success">
+              <p className="text-sm text-base-content/70 dark:text-primary">Deployed %</p>
+              <p className="text-xl font-bold text-success dark:text-primary">
                 {parseFloat(liquidityData.token0Deployed) + parseFloat(liquidityData.token0Idle) > 0
                   ? (
                       (parseFloat(liquidityData.token0Deployed) /
@@ -171,8 +171,8 @@ export const LiquidityCards = () => {
               </p>
             </div>
             <div>
-              <p className="text-sm text-base-content/70">Idle %</p>
-              <p className="text-xl font-bold text-warning">
+              <p className="text-sm text-base-content/70 dark:text-primary">Idle %</p>
+              <p className="text-xl font-bold text-warning dark:text-primary">
                 {parseFloat(liquidityData.token0Deployed) + parseFloat(liquidityData.token0Idle) > 0
                   ? (
                       (parseFloat(liquidityData.token0Idle) /
