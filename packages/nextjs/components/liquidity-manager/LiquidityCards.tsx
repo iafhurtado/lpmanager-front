@@ -18,58 +18,26 @@ export const LiquidityCards = () => {
   });
 
   // Get base position from contract
-  const {
-    data: basePosition,
-    isError: basePositionError,
-    error: basePositionErrorData,
-    isLoading: basePositionLoading,
-  } = useReadContract({
+  const { data: basePosition, isError: basePositionError } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: lpManagerAbi,
     functionName: "getBasePosition",
   });
 
   // Get total amounts from contract
-  const {
-    data: totalAmounts,
-    isError: totalAmountsError,
-    error: totalAmountsErrorData,
-    isLoading: totalAmountsLoading,
-  } = useReadContract({
+  const { data: totalAmounts, isError: totalAmountsError } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: lpManagerAbi,
     functionName: "getTotalAmounts",
   });
 
-  // Debug contract calls
-  useEffect(() => {
-    console.log("=== Contract Call Debug ===");
-    console.log("Contract Address:", CONTRACT_ADDRESS);
-    console.log("Base Position Loading:", basePositionLoading);
-    console.log("Total Amounts Loading:", totalAmountsLoading);
-    console.log("Base Position Data:", basePosition);
-    console.log("Total Amounts Data:", totalAmounts);
-    console.log("Base Position Error:", basePositionError, basePositionErrorData);
-    console.log("Total Amounts Error:", totalAmountsError, totalAmountsErrorData);
-    console.log("==========================");
-  }, [
-    basePosition,
-    totalAmounts,
-    basePositionError,
-    totalAmountsError,
-    basePositionErrorData,
-    totalAmountsErrorData,
-    basePositionLoading,
-    totalAmountsLoading,
-  ]);
-
   useEffect(() => {
     // Update liquidity data when contract data changes
     if (basePosition && totalAmounts) {
       console.log("Processing contract data...");
-      const [amount0, amount1] = basePosition as [bigint, bigint];
+      const [liquidity, amount0, amount1] = basePosition as [bigint, bigint, bigint];
       const [total0, total1] = totalAmounts as [bigint, bigint];
-
+      console.log("Liquidity:", liquidity);
       // Convert amounts to readable format
       // MXNb: 6 decimals, USDT0: 18 decimals
       const deployed0 = Number(amount0) / 10 ** TOKEN0_DECIMALS; // 1844512489 / 10^6 = 1844.512489
@@ -98,22 +66,6 @@ export const LiquidityCards = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-center">Liquidity Overview</h2>
-
-      {/* Debug Info */}
-      <div className="card bg-base-200 shadow-xl">
-        <div className="card-body">
-          <h3 className="card-title">Debug Info</h3>
-          <div className="text-sm">
-            <p>Base Position Loading: {basePositionLoading ? "Yes" : "No"}</p>
-            <p>Total Amounts Loading: {totalAmountsLoading ? "Yes" : "No"}</p>
-            <p>Base Position Error: {basePositionError ? "Yes" : "No"}</p>
-            <p>Total Amounts Error: {totalAmountsError ? "Yes" : "No"}</p>
-            <p>Base Position Data: {basePosition ? "Available" : "Not Available"}</p>
-            <p>Total Amounts Data: {totalAmounts ? "Available" : "Not Available"}</p>
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Deployed Liquidity */}
         <div className="space-y-4">

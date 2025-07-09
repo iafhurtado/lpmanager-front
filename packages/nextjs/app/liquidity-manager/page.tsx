@@ -9,8 +9,17 @@ import { PriceMetrics } from "~~/components/liquidity-manager/PriceMetrics";
 import { TransactionModal } from "~~/components/liquidity-manager/TransactionModal";
 
 export default function LiquidityManager() {
-  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
-  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalAction, setModalAction] = useState<"deposit" | "withdraw">("deposit");
+
+  const handleOpenModal = (action: "deposit" | "withdraw") => {
+    setModalAction(action);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-base-100">
@@ -23,13 +32,13 @@ export default function LiquidityManager() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button onClick={() => setIsDepositModalOpen(true)} className="btn btn-primary btn-lg">
+          <button onClick={() => handleOpenModal("deposit")} className="btn btn-primary btn-lg">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Deposit
           </button>
-          <button onClick={() => setIsWithdrawModalOpen(true)} className="btn btn-outline btn-lg">
+          <button onClick={() => handleOpenModal("withdraw")} className="btn btn-outline btn-lg">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
             </svg>
@@ -55,9 +64,8 @@ export default function LiquidityManager() {
         <AdjustmentHistory />
       </main>
 
-      {/* Transaction Modals */}
-      <TransactionModal isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)} type="deposit" />
-      <TransactionModal isOpen={isWithdrawModalOpen} onClose={() => setIsWithdrawModalOpen(false)} type="withdraw" />
+      {/* Transaction Modal */}
+      <TransactionModal isOpen={isModalOpen} onClose={handleCloseModal} action={modalAction} />
     </div>
   );
 }
