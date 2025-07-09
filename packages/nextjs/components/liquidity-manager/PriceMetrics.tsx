@@ -9,32 +9,13 @@ import { getMockPriceData } from "~~/utils/mockData";
 const token0Address = "0xF197FFC28c23E0309B5559e7a166f2c6164C80aA"; // MXNb
 const token1Address = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT0
 const TOKEN0_DECIMALS = 6; // MXNb has 6 decimals
-const TOKEN1_DECIMALS = 18; // USDT0 has 18 decimals
+const TOKEN1_DECIMALS = 6; // USDT0 has 18 decimals
 // const AMOUNT_IN = BigInt(10 ** TOKEN0_DECIMALS); // 1 MXNb token for price calculation
 const CONTRACT_ADDRESS = "0x3b7b4EB1186B889Df55e9184738468CCE1a6703f"; // LiquidityManager contract address
 
 export const PriceMetrics = () => {
   const [priceData, setPriceData] = useState(getMockPriceData());
   const { address: userAddress } = useAccount();
-
-  // Basic contract verification calls
-  const { data: contractToken0 } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: lpManagerAbi,
-    functionName: "token0",
-  });
-
-  const { data: contractToken1 } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: lpManagerAbi,
-    functionName: "token1",
-  });
-
-  const { data: poolAddress } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: lpManagerAbi,
-    functionName: "pool",
-  });
 
   // Share Balance call
   const { data: shareBalance } = useReadContract({
@@ -49,65 +30,23 @@ export const PriceMetrics = () => {
 
   // Try different amounts for price calculation
   const AMOUNT_IN_SMALL = BigInt(10 ** TOKEN0_DECIMALS); // 1 MXNb
-  const AMOUNT_IN_MEDIUM = BigInt(10 ** TOKEN0_DECIMALS) * BigInt(100); // 100 MXNb
   const AMOUNT_IN_LARGE = BigInt(10 ** TOKEN0_DECIMALS) * BigInt(10000); // 10,000 MXNb
 
   // Oracle price call with different amounts
-  const {
-    data: oracleAmountOut,
-    isError: oracleError,
-    error: oracleErrorData,
-  } = useReadContract({
+  const { data: oracleAmountOut } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: lpManagerAbi,
     functionName: "fetchOracle",
-    args: [token0Address as `0x${string}`, token1Address as `0x${string}`, AMOUNT_IN_LARGE],
+    args: [token1Address as `0x${string}`, token0Address as `0x${string}`, AMOUNT_IN_SMALL],
   });
 
   // Pool spot price call with different amounts
-  const {
-    data: spotAmountOut,
-    isError: spotError,
-    error: spotErrorData,
-  } = useReadContract({
+  const { data: spotAmountOut } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: lpManagerAbi,
     functionName: "fetchSpot",
-    args: [token0Address as `0x${string}`, token1Address as `0x${string}`, AMOUNT_IN_LARGE],
+    args: [token1Address as `0x${string}`, token0Address as `0x${string}`, AMOUNT_IN_SMALL],
   });
-
-  // Debug contract calls
-  useEffect(() => {
-    console.log("=== Contract Call Debug ===");
-    console.log("Contract Address:", CONTRACT_ADDRESS);
-    console.log("Pool Address:", poolAddress);
-    console.log("Contract Token0:", contractToken0);
-    console.log("Contract Token1:", contractToken1);
-    console.log("Our Token0 Address:", token0Address);
-    console.log("Our Token1 Address:", token1Address);
-    console.log("User Address:", userAddress);
-    console.log("Share Balance:", shareBalance);
-    console.log("Amount In (1 MXNb):", AMOUNT_IN_SMALL.toString());
-    console.log("Amount In (100 MXNb):", AMOUNT_IN_MEDIUM.toString());
-    console.log("Amount In (10,000 MXNb):", AMOUNT_IN_LARGE.toString());
-    console.log("Oracle Amount Out:", oracleAmountOut);
-    console.log("Spot Amount Out:", spotAmountOut);
-    console.log("Oracle Error:", oracleError, oracleErrorData);
-    console.log("Spot Error:", spotError, spotErrorData);
-    console.log("==========================");
-  }, [
-    oracleAmountOut,
-    spotAmountOut,
-    oracleError,
-    spotError,
-    oracleErrorData,
-    spotErrorData,
-    contractToken0,
-    contractToken1,
-    poolAddress,
-    userAddress,
-    shareBalance,
-  ]);
 
   useEffect(() => {
     // Update price data when contract data changes
@@ -122,19 +61,6 @@ export const PriceMetrics = () => {
       const poolPrice = Number(spotAmountOut) / 10 ** TOKEN1_DECIMALS;
       const priceDifference = Math.abs(oraclePrice - poolPrice);
       const priceDifferencePercent = (priceDifference / oraclePrice) * 100;
-
-      // Console logging for debugging
-      console.log("=== Price Data ===");
-      console.log("Token0 (MXNb):", token0Address);
-      console.log("Token1 (USDT0):", token1Address);
-      console.log("Amount In (10,000 MXNb):", AMOUNT_IN_LARGE.toString());
-      console.log("Oracle Amount Out (raw):", oracleAmountOut.toString());
-      console.log("Spot Amount Out (raw):", spotAmountOut.toString());
-      console.log("Oracle Price (USDT0 per MXNb):", oraclePrice);
-      console.log("Pool Price (USDT0 per MXNb):", poolPrice);
-      console.log("Price Difference:", priceDifference);
-      console.log("Price Difference %:", priceDifferencePercent.toFixed(4) + "%");
-      console.log("==================");
 
       setPriceData({
         oraclePrice: oraclePrice.toFixed(6),
